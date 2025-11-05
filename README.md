@@ -11,16 +11,27 @@ Furthermore, each environment in the gym offers multiple **cognitive load levels
     <figcaption>Upper: We create three real-time games, <em>Freeway</em>, <em>Snake</em>, and <em>Overcooked</em>, to study the challenge of real-time reasoning. Lower: Under <em>cognitive load</em> and <em>time pressure</em>, <strong>AgileThinker</strong> (Ours), which engages both <em>reactive</em> and <em>planning</em> reasoning paradigms, consistently outperforms agents that engage only one of them. Scores are averaged across different games.</figcaption>
 </figure>
 
-You can see our post, paper, [website](https://bleaves.github.io/real-time-reasoning/) for more detailed demonstrations and explanations.
+You can see our post, paper, [website](https://realtimegym.saltlab.stanford.edu/), and [dataset](https://huggingface.co/datasets/SALT-NLP/RealtimeGym) for more detailed demonstrations and explanations.
 
-- [Quick Start](#quick-start)
-- [Real-Time Reasoning Challenge](#the-real-time-reasoning-challenge)
+- [⚡🧠🏋️ Realtime Reasoning Gym](#️-realtime-reasoning-gym)
+  - [Quick Start](#quick-start)
+  - [The Real-Time Reasoning Challenge](#the-real-time-reasoning-challenge)
     - [Cognitive Load Control](#cognitive-load-control)
     - [Time Pressure Control](#time-pressure-control)
-- [Built-in LLM Agents](#built-in-llm-agents)
-- [Add a New Environment](#add-a-new-environment)
-- [API Reference](#api-reference)
-- [More Examples](#examples)
+      - [Token Budget](#token-budget)
+      - [Time Budget](#time-budget)
+  - [Built-in LLM Agents](#built-in-llm-agents)
+    - [Evaluation](#evaluation)
+  - [Add a New Environment](#add-a-new-environment)
+  - [API Reference](#api-reference)
+    - [Environment API](#environment-api)
+    - [Environment Observation Structure](#environment-observation-structure)
+    - [Agent Configuration](#agent-configuration)
+  - [Testing](#testing)
+  - [Examples](#examples)
+  - [Citation](#citation)
+  - [Acknowledgements](#acknowledgements)
+  - [Links](#links)
 
 ## Quick Start
 1. Install Realtime Reasoning Gym:
