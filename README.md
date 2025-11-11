@@ -571,11 +571,14 @@ realtimegym/
 If you use RealtimeGym in your research, please cite:
 
 ```bibtex
-@software{realtimegym2025,
-  title={RealtimeGym: A Real-time Gym for Evaluating Language Agents},
-  author={wenyl},
-  year={2025},
-  url={https://github.com/wenyl22/RealtimeGym}
+@misc{wen2025realtimereasoningagentsevolving,
+      title={Real-Time Reasoning Agents in Evolving Environments}, 
+      author={Yule Wen and Yixin Ye and Yanzhe Zhang and Diyi Yang and Hao Zhu},
+      year={2025},
+      eprint={2511.04898},
+      archivePrefix={arXiv},
+      primaryClass={cs.AI},
+      url={https://arxiv.org/abs/2511.04898}, 
 }
 ```
 
