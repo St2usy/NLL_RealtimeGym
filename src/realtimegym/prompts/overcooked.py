@@ -18,7 +18,7 @@ DEFAULT_ACTION = "S"
 # Load prompt templates from YAML (in same directory as this module)
 _TEMPLATE_FILE = Path(__file__).parent / "overcooked.yaml"
 
-with open(_TEMPLATE_FILE, "r") as f:
+with open(_TEMPLATE_FILE, "r", encoding="utf-8") as f:
     _TEMPLATES = yaml.safe_load(f)
 
 # Export prompt templates as module-level constants for compatibility

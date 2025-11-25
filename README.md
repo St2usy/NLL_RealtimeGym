@@ -159,23 +159,35 @@ Evaluate agents using the command-line interface:
 
 ```bash
 # Detailed configuration
-agile_eval --time_unit token \
+agile_eval --time_unit  seconds \
     --time_pressure 8192 \
     --internal_budget 4096 \
     --game freeway \
     --cognitive_load E \
     --mode agile \
-    --reactive-model-config configs/deepseek-v3.2-reactive.yaml \
-    --planning-model-config configs/deepseek-v3.2-planning.yaml \
+    --reactive-model-config configs/example-gemini-2.5-flash-reactive.yaml \
+    --planning-model-config configs/example-gemini-2.5-flash-planning.yaml \
     --seed_num 1 --repeat_times 1
 
 # Using more compact configurations
 agile_eval --time_unit token \
     --settings freeway_H_8192_agile_4096 \
-    --reactive-model-config configs/deepseek-v3.2-reactive.yaml \
-    --planning-model-config configs/deepseek-v3.2-planning.yaml \
+    --reactive-model-config configs/example-gemini-2.5-flash-reactive.yaml \
+    --planning-model-config configs/example-gemini-2.5-flash-planning.yaml \
     --seed_num 8 --repeat_times 1
-```
+
+# customized 
+agile_eval --time_unit seconds 
+      --time_pressure 30 
+      --internal_budget 10 
+      --game overcooked 
+      --cognitive_load M 
+      --mode agile 
+      --reactive-model-config configs/example-gemini-2.5-flash-reactive.yaml 
+      --planning-model-config configs/example-gemini-2.5-flash-reactive.yaml 
+      --seed_num 1 
+      --repeat_times 1
+      --save_trajectory_gifs
 
 
 ## Add a New Environment

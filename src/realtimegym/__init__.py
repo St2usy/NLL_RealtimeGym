@@ -16,6 +16,9 @@ _REGISTRY = {
     "Overcooked-v0": ("overcooked", "E"),
     "Overcooked-v1": ("overcooked", "M"),
     "Overcooked-v2": ("overcooked", "H"),
+    "Factory-v0": ("factory", "E"),
+    "Factory-v1": ("factory", "M"),
+    "Factory-v2": ("factory", "H"),
 }
 
 

@@ -19,6 +19,7 @@ __pycache__
 configs/deepseek*
 !assets/*.png
 src/realtimegym/environments/prompts
+public/
 
 # Environment variables (API keys)
 .env
