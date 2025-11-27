@@ -80,6 +80,49 @@ python examples/factory_coordinator_llm.py --model-config configs/example-claude
 python examples/factory_coordinator_llm.py --steps 100 --budget 4000
 ```
 
+### 7. `factory_multi_agent_integration.py` - Hierarchical Multi-Agent System (Advanced)
+**NEW!** Complete hierarchical multi-agent system with 4 LLM-based upper agents:
+
+**Upper Agents (LLM-based):**
+- **PartDesignAgent** (부품설계): Production planning, route selection, batch sizing
+- **MaintenanceAgent** (설비관리): Equipment health monitoring, predictive maintenance
+- **QualityAgent** (품질검사): Defect analysis, process parameter recommendations
+- **CoordinatorAgent** (로봇조정): Real-time task assignment to 44 robots
+
+**Architecture:**
+```
+Product Request → PartDesignAgent (Plan)
+                  ├→ MaintenanceAgent (Equipment Risk)
+                  ├→ QualityAgent (Defect Analysis)
+                  └→ CoordinatorAgent (Task Execution)
+                      └→ Lower Agents (44 robots)
+```
+
+**Prerequisites:**
+1. Copy `.env.example` to `.env`
+2. Add your API key (OPENAI_API_KEY, DEEPSEEK_API_KEY, or ANTHROPIC_API_KEY)
+
+**Run:**
+```bash
+# Using Claude (recommended for all agents)
+python examples/factory_multi_agent_integration.py
+
+# Using GPT-4o
+python examples/factory_multi_agent_integration.py --model-config configs/example-gpt4o-coordinator.yaml
+
+# Custom settings (longer simulation)
+python examples/factory_multi_agent_integration.py --steps 200 --budget 2000
+```
+
+**Features:**
+- Production planning with route optimization
+- Real-time equipment health monitoring
+- Quality control with defect pattern detection
+- Inter-agent communication and coordination
+- Comprehensive logging for all agents
+
+**Documentation:** See [FACTORY_MULTI_AGENT.md](../FACTORY_MULTI_AGENT.md) for detailed architecture and coordination flow.
+
 ## The RealtimeGym API
 
 All examples follow the standard API pattern:
