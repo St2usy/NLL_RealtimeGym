@@ -1,0 +1,11 @@
+# GPT-4o Configuration for CoordinatorAgent
+# Balanced performance and cost for factory coordination tasks
+
+model: gpt-4o
+api_key: ${OPENAI_API_KEY}  # Set in .env file
+url: https://api.openai.com/v1
+
+inference_parameters:
+  temperature: 0.3  # Low temperature for consistent task assignments
+  max_tokens: 2000  # Sufficient for JSON task assignments
+  top_p: 0.95

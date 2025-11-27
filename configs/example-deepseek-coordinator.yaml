@@ -1,0 +1,10 @@
+# DeepSeek V3 Configuration for CoordinatorAgent
+# Cost-effective option for factory coordination
+
+model: deepseek-chat
+api_key: ${DEEPSEEK_API_KEY}  # Set in .env file
+url: https://api.deepseek.com/v1
+
+inference_parameters:
+  temperature: 0.3
+  max_tokens: 2000

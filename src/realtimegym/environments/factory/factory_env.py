@@ -1,9 +1,9 @@
 """Main Factory environment implementation."""
 
-from typing import Any
+from typing import Any, Union
 
 from ..base import BaseEnv
-from .agents import LogisticsRobot, RobotArm
+from .agents import LogisticsRobot, RobotArm, Task
 from .recipes import RECIPES, Recipe
 from .stations import Cooker, Cutter, Plating, Sealing, Station, Storage, VisionQA, Washer, WorkItem
 
@@ -41,6 +41,9 @@ class FactoryEnv(BaseEnv):
 
         # Production schedule
         self.production_queue: list[tuple[str, int]] = []  # (product_type, quantity)
+
+        # Robot lookup by ID (for coordinator agent task assignment)
+        self.robot_lookup: dict[str, Union[RobotArm, LogisticsRobot]] = {}
 
     def reset(self) -> tuple[dict[str, Any], bool]:
         """Reset the factory environment."""
@@ -116,6 +119,7 @@ class FactoryEnv(BaseEnv):
         """Setup robot agents."""
         self.robot_arms = []
         self.logistics_robots = []
+        self.robot_lookup = {}
 
         robot_id = 0
 
@@ -202,6 +206,17 @@ class FactoryEnv(BaseEnv):
                 )
                 robot_id += 1
 
+        # Build robot lookup dictionary
+        for i, robot in enumerate(self.robot_arms):
+            # Name robot arms by their assigned station
+            station_name = robot.assigned_station.lower()
+            robot_name = f"robot_arm_{station_name}_{i}"
+            self.robot_lookup[robot_name] = robot
+
+        for i, robot in enumerate(self.logistics_robots):
+            robot_name = f"logistics_{i}"
+            self.robot_lookup[robot_name] = robot
+
     def _schedule_production(self) -> None:
         """Schedule initial production orders."""
         # Simple production schedule
@@ -267,11 +282,17 @@ class FactoryEnv(BaseEnv):
                             next_station = self.stations[next_station_type][line_idx]
                             next_station.add_to_queue(item)
 
-    def step(self, action: str) -> tuple[dict[str, Any], bool, float, bool]:
+    def step(self, action: Union[str, dict]) -> tuple[dict[str, Any], bool, float, bool]:
         """
         Execute one time step in the factory.
 
-        For prototype, action represents high-level decisions:
+        Args:
+            action: Either:
+                - String: High-level command ("produce_salad", "continue", etc.)
+                - Dict: Task assignments from coordinator agent
+                    Format: {"robot_id": {"type": "task_type", ...}, ...}
+
+        For string actions:
         - "produce_salad": Start producing ricotta salad
         - "produce_rice": Start producing shrimp fried rice
         - "produce_pasta": Start producing tomato pasta
@@ -281,34 +302,44 @@ class FactoryEnv(BaseEnv):
         self.game_turn += 1
         step_reward = 0
 
-        # Process action
-        if action.startswith("produce_"):
-            product_type = action.replace("produce_", "")
-            if product_type in RECIPES:
-                # Create new product and add to first storage
-                work_item = self._spawn_product(product_type)
-                self.stations["Storage"][0].add_to_queue(work_item)
-                self.products_in_progress.append(work_item)
+        # Determine if using coordinator agent mode
+        coordinator_mode = isinstance(action, dict)
 
-        elif action.startswith("maintain_cutter"):
-            # Maintenance action
-            try:
-                line_idx = int(action.split("_")[-1])
-                if 0 <= line_idx < self.num_lines:
-                    cutter = self.stations["Cutter"][line_idx]
-                    cutter.blade_sharpness = 1.0
-                    cutter.wear_level = 0.0
-                    cutter.failure_probability = 0.0
-            except (ValueError, IndexError):
-                pass
+        # Process action
+        if coordinator_mode:
+            # Coordinator agent mode: assign tasks to robots
+            self._assign_tasks_to_robots(action)
+
+        elif isinstance(action, str):
+            # String action mode (legacy/high-level commands)
+            if action.startswith("produce_"):
+                product_type = action.replace("produce_", "")
+                if product_type in RECIPES:
+                    # Create new product and add to first storage
+                    work_item = self._spawn_product(product_type)
+                    self.stations["Storage"][0].add_to_queue(work_item)
+                    self.products_in_progress.append(work_item)
+
+            elif action.startswith("maintain_cutter"):
+                # Maintenance action
+                try:
+                    line_idx = int(action.split("_")[-1])
+                    if 0 <= line_idx < self.num_lines:
+                        cutter = self.stations["Cutter"][line_idx]
+                        cutter.blade_sharpness = 1.0
+                        cutter.wear_level = 0.0
+                        cutter.failure_probability = 0.0
+                except (ValueError, IndexError):
+                    pass
 
         # Simulate all stations processing
         for station_list in self.stations.values():
             for station in station_list:
                 station.process_step(self.random)
 
-        # Basic workflow automation (for prototype - in real system, agents would handle this)
-        self._auto_workflow()
+        # Auto workflow only if NOT in coordinator mode
+        if not coordinator_mode:
+            self._auto_workflow()
 
         # Simulate all robots
         for robot in self.robot_arms:
@@ -464,3 +495,108 @@ class FactoryEnv(BaseEnv):
             },
             "production_queue": self.production_queue,
         }
+
+    def observe(self) -> dict[str, Any]:
+        """
+        Return observation for agents (implementing BaseEnv interface).
+
+        Returns:
+            Dictionary with state_string, game_turn, and detailed state
+        """
+        return {
+            "state_string": self.state_string(),
+            "game_turn": self.game_turn,
+            "state": self._build_state_for_coordinator(),
+        }
+
+    def _build_state_for_coordinator(self) -> dict[str, Any]:
+        """
+        Build state specifically for coordinator agent.
+
+        Includes production queue, station states, robot states, and KPIs.
+        """
+        # Get base state
+        base_state = self.state_builder()
+
+        # Build robots dict with string IDs
+        robots = {}
+        for robot_name, robot in self.robot_lookup.items():
+            robots[robot_name] = robot.get_state()
+
+        # Build stations dict with detailed info
+        stations = {}
+        for station_type, station_list in self.stations.items():
+            stations[station_type] = []
+            for station in station_list:
+                state = station.get_state()
+                # Add current item if processing
+                if hasattr(station, "current_item") and station.current_item:
+                    state["current_item"] = station.current_item.product_type
+                else:
+                    state["current_item"] = None
+                stations[station_type].append(state)
+
+        return {
+            "game_turn": self.game_turn,
+            "production_queue": self.production_queue,
+            "stations": stations,
+            "robots": robots,
+            "kpis": base_state["kpis"],
+        }
+
+    def _assign_tasks_to_robots(self, task_assignments: dict[str, dict]) -> None:
+        """
+        Assign tasks from coordinator agent to robots.
+
+        Args:
+            task_assignments: Dict mapping robot_id to task dict
+                Example: {"logistics_0": {"type": "pick_and_deliver", "from": "Storage", ...}}
+        """
+        for robot_name, task_dict in task_assignments.items():
+            if robot_name not in self.robot_lookup:
+                print(f"[FactoryEnv] Warning: Unknown robot '{robot_name}'")
+                continue
+
+            robot = self.robot_lookup[robot_name]
+
+            # Only assign to idle robots
+            if robot.status.value != "idle":
+                continue
+
+            # Create Task object based on task type
+            task_type = task_dict.get("type")
+
+            if task_type == "pick_and_deliver":
+                # Logistics robot: pick from source, deliver to destination
+                from_station = task_dict.get("from")
+                to_station = task_dict.get("to")
+
+                if from_station and to_station:
+                    # Get station positions
+                    from_pos = self._get_station_position(from_station, 0)  # Line 0 for now
+                    to_pos = self._get_station_position(to_station, 0)
+
+                    if from_pos and to_pos:
+                        # Assign move task to source
+                        robot.assign_task(
+                            Task(task_type="move", target_position=from_pos)
+                        )
+
+            elif task_type == "operate_station":
+                # Robot arm: operate assigned station
+                if isinstance(robot, RobotArm):
+                    robot.assign_task(Task(task_type="operate"))
+
+            elif task_type == "wait":
+                # Do nothing
+                pass
+
+            elif task_type == "return_to_base":
+                # Move back to idle position (simplified: current position)
+                pass
+
+    def _get_station_position(self, station_type: str, line_idx: int) -> tuple[int, int] | None:
+        """Get position of a station by type and line index."""
+        if station_type in self.stations and line_idx < len(self.stations[station_type]):
+            return self.stations[station_type][line_idx].position
+        return None

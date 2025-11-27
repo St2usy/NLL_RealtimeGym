@@ -124,10 +124,125 @@ factory/
 └── README.md            # 이 파일
 ```
 
+## LLM-Based Coordinator (NEW!)
+
+### Overview
+
+The factory environment now supports **hierarchical multi-agent control** via a CoordinatorAgent:
+
+- **CoordinatorAgent** (LLM-based): Makes high-level task assignment decisions
+- **44 Sub-agents** (Rule-based): Execute assigned tasks autonomously
+
+This enables testing language models' ability to coordinate complex multi-agent systems under real-time constraints.
+
+### Usage with CoordinatorAgent
+
+```python
+from realtimegym.environments.factory import FactoryEnv
+from realtimegym.agents.factory import CoordinatorAgent
+from realtimegym.prompts.factory import coordinator as coordinator_prompts
+
+# 1. Create environment
+env = FactoryEnv()
+env.set_seed(42)
+obs, done = env.reset()
+
+# 2. Create coordinator agent
+coordinator = CoordinatorAgent(
+    prompts=coordinator_prompts,
+    file="logs/coordinator.csv",
+    time_unit="token",
+    model1_config="configs/example-gpt4o-coordinator.yaml",
+    internal_budget=2000  # Token budget per step
+)
+
+# 3. Add product to queue
+work_item = env._spawn_product("ricotta_salad")
+env.stations["Storage"][0].add_to_queue(work_item)
+
+# 4. Run coordination loop
+for step in range(50):
+    # Coordinator observes
+    obs = env.observe()
+    coordinator.observe(obs)
+
+    # Coordinator decides task assignments
+    task_assignments = coordinator.think(timeout=2000)
+    # Returns: {"logistics_0": {"type": "pick_and_deliver", ...}, ...}
+
+    # Environment executes
+    obs, done, reward, reset = env.step(task_assignments)
+
+    if done:
+        break
+```
+
+### Quick Start
+
+See `examples/factory_coordinator_llm.py` for a complete example:
+
+```bash
+# Run with GPT-4o
+python examples/factory_coordinator_llm.py
+
+# Run with DeepSeek (cost-effective)
+python examples/factory_coordinator_llm.py --model-config configs/example-deepseek-coordinator.yaml
+
+# Run with Claude (high-performance)
+python examples/factory_coordinator_llm.py --model-config configs/example-claude-coordinator.yaml
+```
+
+### Architecture
+
+```
+┌──────────────────────────────────────┐
+│   CoordinatorAgent (LLM)             │
+│   - Observes entire factory state     │
+│   - Outputs JSON task assignments     │
+│   - Token-budgeted decision making    │
+└──────────────────────────────────────┘
+              ↓ JSON
+┌──────────────────────────────────────┐
+│   FactoryEnv                         │
+│   - Parses task assignments           │
+│   - Assigns tasks to robots           │
+│   - Simulates execution               │
+└──────────────────────────────────────┘
+              ↓ Task objects
+┌──────────────────────────────────────┐
+│   44 Sub-Agents (Rule-based)         │
+│   - RobotArm: Station operations      │
+│   - Logistics: Material transport     │
+│   - A* pathfinding (future)          │
+└──────────────────────────────────────┘
+```
+
+### Task Types
+
+**For Logistics Robots:**
+```json
+{
+  "type": "pick_and_deliver",
+  "from": "Storage",
+  "to": "Washer",
+  "item": "lettuce"
+}
+```
+
+**For Robot Arms:**
+```json
+{
+  "type": "operate_station",
+  "station": "Washer",
+  "duration": 20
+}
+```
+
 ## 향후 개발 계획
 
-1. 상위 에이전트 통합 (부품 설계, 설비 관리, 로봇 협동, 품질 검사)
-2. 로봇 경로 계획 및 충돌 회피
-3. 실시간 스케줄링 최적화
-4. 렌더링 시스템 (공장 시각화)
-5. 더 복잡한 시나리오 (긴급 주문, 설비 고장 등)
+1. ✅ ~~상위 에이전트 통합 (협동 로봇 Coordinator)~~ **완료!**
+2. A* 경로 계획 및 충돌 회피
+3. 추가 상위 에이전트 (부품 설계, 설비 관리, 품질 검사)
+4. 실시간 스케줄링 최적화
+5. 렌더링 시스템 (공장 시각화)
+6. 더 복잡한 시나리오 (긴급 주문, 설비 고장 등)

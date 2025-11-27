@@ -1,0 +1,55 @@
+# Ricotta Cheese Salad Recipe
+# Based on PDF specification (page 12)
+
+name: "Ricotta Salad"
+
+ingredients:
+  - lettuce
+  - romaine
+  - sprouts
+  - cherry_tomato
+  - ricotta_cheese
+  - nuts
+  - balsamic_sauce
+
+# Production workflow (in order)
+workflow:
+  - stage: Storage
+    description: "Pick up vegetables and ricotta cheese"
+    processing_time: 1  # steps (10 seconds)
+
+  - stage: Washer
+    description: "Wash vegetables"
+    processing_time: 2  # steps (20 seconds)
+
+  - stage: Cutter
+    description: "Slice vegetables"
+    processing_time: 2  # steps (20 seconds)
+
+  - stage: Plating
+    description: "Assemble: vegetables → ricotta → nuts"
+    processing_time: 3  # steps (30 seconds)
+
+  - stage: Sealing
+    description: "Wrap with film"
+    processing_time: 2  # steps (20 seconds)
+
+  - stage: VisionQA
+    description: "Check appearance and weight"
+    processing_time: 1  # steps (10 seconds)
+
+  - stage: FinalStorage
+    description: "Store in refrigerator"
+    processing_time: 1  # steps (10 seconds)
+
+# Quality parameters
+quality:
+  target_weight: 300  # grams
+  weight_tolerance: 20  # ±20g
+  appearance_check: true
+
+# Notes
+notes: |
+  - Total processing time: ~12 steps (120 seconds)
+  - No cooking required (simpler than pasta/fried rice)
+  - Good for initial prototype testing

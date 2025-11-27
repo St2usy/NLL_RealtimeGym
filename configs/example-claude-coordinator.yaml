@@ -1,0 +1,10 @@
+# Claude 3.5 Sonnet Configuration for CoordinatorAgent
+# High-performance option for complex factory coordination
+
+model: claude-3-5-sonnet-20241022
+api_key: ${ANTHROPIC_API_KEY}  # Set in .env file
+url: https://api.anthropic.com/v1
+
+inference_parameters:
+  temperature: 0.3
+  max_tokens: 2000

@@ -45,6 +45,41 @@ Explores all difficulty levels (Easy, Medium, Hard):
 
 **Run:** `python examples/difficulty_levels.py`
 
+### 5. `factory_basic.py` - Factory Environment (Prototype)
+Demonstrates the unmanned factory environment:
+- Multi-agent system with 44 robots (20 arms + 24 logistics)
+- Production workflow for 3 food products
+- Automated workflow management (prototype mode)
+- KPI tracking (production, lead time, defect rate)
+
+**Run:** `python examples/factory_basic.py`
+
+### 6. `factory_coordinator_llm.py` - LLM-Based Coordinator (Advanced)
+**NEW!** Shows the complete multi-agent factory with LLM control:
+- CoordinatorAgent using GPT-4o/DeepSeek/Claude
+- LLM decides task assignments for all 44 robots
+- Real-time token-budgeted decision making
+- Salad production scenario
+
+**Prerequisites:**
+1. Copy `.env.example` to `.env`
+2. Add your API key (OPENAI_API_KEY, DEEPSEEK_API_KEY, or ANTHROPIC_API_KEY)
+
+**Run:**
+```bash
+# Using GPT-4o (default)
+python examples/factory_coordinator_llm.py
+
+# Using DeepSeek (cost-effective)
+python examples/factory_coordinator_llm.py --model-config configs/example-deepseek-coordinator.yaml
+
+# Using Claude (high-performance)
+python examples/factory_coordinator_llm.py --model-config configs/example-claude-coordinator.yaml
+
+# Custom settings
+python examples/factory_coordinator_llm.py --steps 100 --budget 4000
+```
+
 ## The RealtimeGym API
 
 All examples follow the standard API pattern:
@@ -86,6 +121,7 @@ Available environments:
 | Freeway    | `Freeway-v0` | `Freeway-v1` | `Freeway-v2` |
 | Snake      | `Snake-v0` | `Snake-v1` | `Snake-v2` |
 | Overcooked | `Overcooked-v0` | `Overcooked-v1` | `Overcooked-v2` |
+| Factory    | `Factory-v0` | `Factory-v1` | `Factory-v2` |
 
 ## Agent Interface
 

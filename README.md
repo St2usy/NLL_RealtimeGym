@@ -83,6 +83,7 @@ Realtime Reasoning Gym includes three real-time games with increasing cognitive 
 | **Freeway** | Cross busy roads avoiding cars | `U` (up), `D` (down), `S` (stay) | v0 (Easy), v1 (Medium), v2 (Hard) |
 | **Snake** | Classic snake game with growing body | `U`, `D`, `L` (left), `R` (right), `S` | v0, v1, v2 |
 | **Overcooked** | Cooperative cooking simulation | `U`, `D`, `L`, `R`, `I` (interact), `S` | v0, v1, v2 |
+| **Factory** ⭐ **NEW** | Unmanned food factory with multi-agent coordination | JSON task assignments | v0, v1, v2 |
 
 Create any environment:
 ```python
@@ -297,6 +298,9 @@ python examples/basic_renderer.py
 # Compare all environments
 python examples/all_environments.py
 
+# Factory environment with LLM coordinator (NEW!)
+python examples/factory_coordinator_llm.py
+
 # Custom agent implementation
 python examples/custom_agent.py
 
@@ -304,6 +308,73 @@ python examples/custom_agent.py
 python examples/difficulty_levels.py
 ```
 
+## Factory Environment (Multi-Agent Coordination)
+
+The **Factory** environment introduces a new dimension to real-time reasoning: **hierarchical multi-agent coordination**. Unlike the single-agent games (Freeway, Snake, Overcooked), Factory requires an LLM-based coordinator to manage 44 sub-agents in an unmanned food production facility.
+
+### Key Features
+
+- **44 Robots**: 20 robot arms (station operations) + 24 logistics robots (material transport)
+- **Hierarchical Control**: LLM CoordinatorAgent assigns tasks → Rule-based sub-agents execute
+- **3 Products**: Ricotta Salad, Shrimp Fried Rice, Tomato Pasta
+- **7 Stations**: Storage → Washer → Cutter → Cooker → Plating → Sealing → VisionQA
+- **Real-time KPIs**: Production rate, lead time, defect rate, robot idle ratio
+
+### Architecture
+
+```
+User → CoordinatorAgent (LLM) → Task Assignments (JSON)
+           ↓
+       FactoryEnv → 44 Sub-Agents (Rule-based)
+           ↓
+       Stations → Production Output
+```
+
+### Quick Start
+
+1. **Set up API keys:**
+```bash
+cp .env.example .env
+# Edit .env and add your OPENAI_API_KEY, DEEPSEEK_API_KEY, or ANTHROPIC_API_KEY
+```
+
+2. **Run with LLM coordinator:**
+```bash
+# GPT-4o (balanced)
+python examples/factory_coordinator_llm.py
+
+# DeepSeek (cost-effective)
+python examples/factory_coordinator_llm.py --model-config configs/example-deepseek-coordinator.yaml
+
+# Claude (high-performance)
+python examples/factory_coordinator_llm.py --model-config configs/example-claude-coordinator.yaml
+```
+
+3. **Customize settings:**
+```bash
+python examples/factory_coordinator_llm.py --steps 100 --budget 4000
+```
+
+### Task Assignment Format
+
+The CoordinatorAgent outputs JSON task assignments:
+
+```json
+{
+  "logistics_0": {
+    "type": "pick_and_deliver",
+    "from": "Storage",
+    "to": "Washer",
+    "item": "lettuce"
+  },
+  "robot_arm_washer_0": {
+    "type": "operate_station",
+    "station": "Washer"
+  }
+}
+```
+
+For more details, see [`src/realtimegym/environments/factory/README.md`](src/realtimegym/environments/factory/README.md).
 
 ## Citation
 
