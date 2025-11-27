@@ -12,15 +12,15 @@ class FactoryEnv(BaseEnv):
     """
     Unmanned food factory environment with multi-agent coordination.
 
-    Grid size: 16 x 30
+    Grid size: width 16 x height 30
     Production lines: 2
     Products: Ricotta Salad, Shrimp Fried Rice, Tomato Pasta
     """
 
     def __init__(self):
         super().__init__()
-        self.width = 30
-        self.height = 16
+        self.width = 16
+        self.height = 30
         self.num_lines = 2
 
         # Stations and robots
@@ -81,35 +81,45 @@ class FactoryEnv(BaseEnv):
             "FinalStorage": [],
         }
 
-        # Line 1 (left side, x=0-14)
-        # Line 2 (right side, x=15-29)
+        # Line 1 (left side, x=0-7)
+        # Line 2 (right side, x=8-15)
+        # All stations aligned vertically at x=4 (Line 1) and x=12 (Line 2)
         for line_idx in range(self.num_lines):
-            x_offset = line_idx * 15
+            x_offset = line_idx * 8
+            station_x = 4 + x_offset  # Line 1: x=4, Line 2: x=12
 
             # Storage at top
-            self.stations["Storage"].append(Storage(position=(1 + x_offset, 1)))
+            self.stations["Storage"].append(Storage(position=(station_x, 1)))
 
             # Washer
-            self.stations["Washer"].append(Washer(position=(3 + x_offset, 3)))
+            self.stations["Washer"].append(Washer(position=(station_x, 3)))
 
-            # Cutter
-            self.stations["Cutter"].append(Cutter(position=(3 + x_offset, 6)))
+            # Cutter (2 stations per line, parallel at same y-axis)
+            left_x = station_x - 1
+            right_x = station_x + 1
+            self.stations["Cutter"].append(Cutter(position=(left_x, 5)))
+            self.stations["Cutter"].append(Cutter(position=(right_x, 5)))
 
-            # Cooker
-            self.stations["Cooker"].append(Cooker(position=(3 + x_offset, 9)))
+            # Cooker (2 stations per line, parallel at same y-axis)
+            self.stations["Cooker"].append(Cooker(position=(left_x, 9)))
+            self.stations["Cooker"].append(Cooker(position=(right_x, 9)))
 
-            # Plating
-            self.stations["Plating"].append(Plating(position=(3 + x_offset, 11)))
+            # Plating (with dish_container as sub-station - 2 containers below robot arms)
+            plating = Plating(position=(station_x, 13))
+            plating.dish_container_positions = [(left_x, 15), (right_x, 15)]
+            self.stations["Plating"].append(plating)
 
             # Sealing
-            self.stations["Sealing"].append(Sealing(position=(5 + x_offset, 13)))
+            self.stations["Sealing"].append(Sealing(position=(station_x, 19)))
 
-            # VisionQA
-            self.stations["VisionQA"].append(VisionQA(position=(7 + x_offset, 13)))
+            # VisionQA (with garbage_can for defect disposal - 2 cans below robot arms)
+            visionqa = VisionQA(position=(station_x, 22))
+            visionqa.garbage_can_positions = [(left_x, 24), (right_x, 24)]
+            self.stations["VisionQA"].append(visionqa)
 
             # Final Storage at bottom
             self.stations["FinalStorage"].append(
-                Storage(position=(10 + x_offset, 14), is_final=True)
+                Storage(position=(station_x, 28), is_final=True)
             )
 
     def _setup_robots(self) -> None:
@@ -119,85 +129,139 @@ class FactoryEnv(BaseEnv):
 
         robot_id = 0
 
-        # Setup robot arms (6 processing + 4 plating per line = 10 per line = 20 total)
+        # Setup robot arms - positioned on both sides of each station
+        # Station positions: x=4 (Line 1) and x=12 (Line 2)
+        # Robot arms: left side (x-1) and right side (x+1)
         for line_idx in range(self.num_lines):
-            x_offset = line_idx * 15
+            x_offset = line_idx * 8
+            station_x = 4 + x_offset
+            left_x = station_x - 1
+            right_x = station_x + 1
 
-            # 2 arms for Washer
-            for i in range(2):
-                self.robot_arms.append(
-                    RobotArm(
-                        robot_id=robot_id,
-                        position=(2 + x_offset, 3 + i),
-                        assigned_station="Washer",
-                    )
-                )
-                robot_id += 1
-
-            # 2 arms for Cutter
-            for i in range(2):
-                self.robot_arms.append(
-                    RobotArm(
-                        robot_id=robot_id,
-                        position=(2 + x_offset, 6 + i),
-                        assigned_station="Cutter",
-                    )
-                )
-                robot_id += 1
-
-            # 2 arms for Cooker
-            for i in range(2):
-                self.robot_arms.append(
-                    RobotArm(
-                        robot_id=robot_id,
-                        position=(2 + x_offset, 9 + i),
-                        assigned_station="Cooker",
-                    )
-                )
-                robot_id += 1
-
-            # 2 arms for Plating
-            for i in range(2):
-                self.robot_arms.append(
-                    RobotArm(
-                        robot_id=robot_id,
-                        position=(2 + x_offset, 11 + i),
-                        assigned_station="Plating",
-                    )
-                )
-                robot_id += 1
-
-            # 1 arm for Sealing
+            # 2 arms for Washer (y=3) - left and right
             self.robot_arms.append(
                 RobotArm(
                     robot_id=robot_id,
-                    position=(4 + x_offset, 13),
+                    position=(left_x, 3),
+                    assigned_station="Washer",
+                )
+            )
+            robot_id += 1
+            self.robot_arms.append(
+                RobotArm(
+                    robot_id=robot_id,
+                    position=(right_x, 3),
+                    assigned_station="Washer",
+                )
+            )
+            robot_id += 1
+
+            # 2 arms for Cutter (2 parallel stations at y=5) - below each station at y=6
+            self.robot_arms.append(
+                RobotArm(
+                    robot_id=robot_id,
+                    position=(left_x, 6),
+                    assigned_station="Cutter",
+                )
+            )
+            robot_id += 1
+            self.robot_arms.append(
+                RobotArm(
+                    robot_id=robot_id,
+                    position=(right_x, 6),
+                    assigned_station="Cutter",
+                )
+            )
+            robot_id += 1
+
+            # 2 arms for Cooker (2 parallel stations at y=9) - below each station at y=10
+            self.robot_arms.append(
+                RobotArm(
+                    robot_id=robot_id,
+                    position=(left_x, 10),
+                    assigned_station="Cooker",
+                )
+            )
+            robot_id += 1
+            self.robot_arms.append(
+                RobotArm(
+                    robot_id=robot_id,
+                    position=(right_x, 10),
+                    assigned_station="Cooker",
+                )
+            )
+            robot_id += 1
+
+            # 2 arms for Plating (y=13) - left and right at y=14
+            # Dish containers will be at y=15 (below robot arms)
+            self.robot_arms.append(
+                RobotArm(
+                    robot_id=robot_id,
+                    position=(left_x, 14),
+                    assigned_station="Plating",
+                )
+            )
+            robot_id += 1
+            self.robot_arms.append(
+                RobotArm(
+                    robot_id=robot_id,
+                    position=(right_x, 14),
+                    assigned_station="Plating",
+                )
+            )
+            robot_id += 1
+
+            # 2 arms for Sealing (y=19) - left and right at y=20
+            self.robot_arms.append(
+                RobotArm(
+                    robot_id=robot_id,
+                    position=(left_x, 20),
+                    assigned_station="Sealing",
+                )
+            )
+            robot_id += 1
+            self.robot_arms.append(
+                RobotArm(
+                    robot_id=robot_id,
+                    position=(right_x, 20),
                     assigned_station="Sealing",
                 )
             )
             robot_id += 1
 
-            # 1 arm for VisionQA
+            # 2 arms for VisionQA (y=22) - left and right at y=23
+            # Garbage cans will be at y=24 (below robot arms)
             self.robot_arms.append(
                 RobotArm(
                     robot_id=robot_id,
-                    position=(6 + x_offset, 13),
+                    position=(left_x, 23),
+                    assigned_station="VisionQA",
+                )
+            )
+            robot_id += 1
+            self.robot_arms.append(
+                RobotArm(
+                    robot_id=robot_id,
+                    position=(right_x, 23),
                     assigned_station="VisionQA",
                 )
             )
             robot_id += 1
 
-        # Setup logistics robots (8 + 4 per line = 12 per line = 24 total)
+        # Setup logistics robots (12 per line = 24 total)
+        # Distributed along the vertical line, on the outer edge
         for line_idx in range(self.num_lines):
-            x_offset = line_idx * 15
+            x_offset = line_idx * 8
+            # Place logistics robots on the outer edges (x=1 for Line 1, x=9 for Line 2)
+            logistics_x = 1 + x_offset
 
-            # 12 logistics robots distributed along the line
+            # 12 logistics robots distributed along the line (y=2 to 26)
             for i in range(12):
-                y_pos = 2 + i
+                y_pos = 2 + i * 2
                 self.logistics_robots.append(
                     LogisticsRobot(
                         robot_id=robot_id,
-                        position=(5 + x_offset, y_pos),
+                        position=(logistics_x, y_pos),
                     )
                 )
                 robot_id += 1
