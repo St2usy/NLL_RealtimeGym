@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(mkdir:*)",
-      "Bash(python examples/factory_lanes_diagram.py:*)"
+      "Bash(python examples/factory_lanes_diagram.py:*)",
+      "Bash(python examples/debug_workflow.py:*)",
+      "Bash(python:*)",
+      "Bash(timeout 120 python:*)",
+      "Bash(pip install:*)"
     ],
     "deny": [],
     "ask": []
