@@ -1,4 +1,4 @@
-
+# v3
 # ⚡🧠🏋️ Realtime Reasoning Gym
 
 **Realtime Reasoning Gym** is a specialized evaluation framework for testing how well language agents can reason and make decisions under real-time constraints. Unlike traditional OpenAI Gym environments where agents have unlimited thinking time, Realtime Reasoning Gym enforces strict **time budgets** (measured in seconds) or **token budgets** (measured in LLM decoding tokens) to simulate real-world pressure.
