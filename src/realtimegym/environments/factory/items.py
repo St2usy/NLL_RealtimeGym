@@ -61,10 +61,11 @@ class Item:
     quantity: int = 1
     processed: bool = False
     quality: float = 1.0  # 0.0 ~ 1.0
+    line: int = 1  # Production line (1 or 2)
     metadata: dict = field(default_factory=dict)
 
     def __repr__(self) -> str:
-        return f"{self.item_type.value}(q={self.quantity}, qual={self.quality:.2f})"
+        return f"{self.item_type.value}(q={self.quantity}, qual={self.quality:.2f}, line={self.line})"
 
 
 class RecipeType(Enum):

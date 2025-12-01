@@ -15,7 +15,7 @@ class FactoryRender:
     def __init__(self, cell_size: int = 40) -> None:
         pygame.init()
         self.cell_size = cell_size
-        self.grid_height = 16
+        self.grid_height = 20
         self.grid_width = 30
         self.width = self.grid_width * cell_size
         self.height = self.grid_height * cell_size
@@ -48,7 +48,7 @@ class FactoryRender:
             "cooker": "cooker.png",
             "plating": "plating.png",
             "sealing": "sealing.png",
-            "visionQA": "visionQA.png",
+            "visionqa": "visionQA.png",  # Match lowercase key
             "robot_arm": "robot_arm.png",
             "logistic": "logistic.png",
             "logistic_on": "logistic_on.png",
@@ -89,6 +89,17 @@ class FactoryRender:
         for col in range(self.grid_width + 1):
             x = col * self.cell_size
             pygame.draw.line(self.screen, self.GRAY, (x, 0), (x, self.height), 1)
+
+        # Draw line separator (middle vertical line between columns 14 and 15)
+        separator_x = 15 * self.cell_size
+        pygame.draw.line(self.screen, self.DARK_GRAY, (separator_x, 0), (separator_x, self.height), 3)
+
+        # Draw line labels
+        font = pygame.font.Font(None, 28)
+        line1_text = font.render("LINE 1", True, self.DARK_GRAY)
+        line2_text = font.render("LINE 2", True, self.DARK_GRAY)
+        self.screen.blit(line1_text, (5 * self.cell_size, 2))
+        self.screen.blit(line2_text, (20 * self.cell_size, 2))
 
         # Draw stations
         for station in env.stations:
@@ -144,11 +155,19 @@ class FactoryRender:
         # Draw logistic robots
         for robot in env.logistic_robots:
             row, col = robot.position
-            x = col * self.cell_size + 2
-            y = row * self.cell_size + 2
-            size = 8
+            size = 16  # Increased size for better visibility
+            x = col * self.cell_size + (self.cell_size - size) // 2
+            y = row * self.cell_size + (self.cell_size - size) // 2
 
-            if robot.carrying_item:
+            # Reserve robots shown in gray
+            if not robot.is_active:
+                pygame.draw.rect(self.screen, (150, 150, 150), (x, y, size, size))
+                # Draw small "R" for reserve
+                font = pygame.font.Font(None, 12)
+                text = font.render("R", True, self.WHITE)
+                text_rect = text.get_rect(center=(x + size // 2, y + size // 2))
+                self.screen.blit(text, text_rect)
+            elif robot.carrying_item:
                 # Draw with item
                 if "logistic_on" in self.images and self.images["logistic_on"]:
                     img = pygame.transform.scale(self.images["logistic_on"], (size, size))

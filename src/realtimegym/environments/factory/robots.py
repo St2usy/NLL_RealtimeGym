@@ -136,6 +136,7 @@ class LogisticRobot:
 
     robot_id: int
     position: tuple[int, int]  # (row, col)
+    line: int = 1  # Assigned production line (1 or 2)
     status: RobotStatus = RobotStatus.IDLE
     carrying_item: Optional[Item] = None
     current_task: Optional[Task] = None
@@ -143,6 +144,9 @@ class LogisticRobot:
     path: list[tuple[int, int]] = field(default_factory=list)
     error_count: int = 0
     observation_range: int = 3
+    home_position: Optional[tuple[int, int]] = None  # Initial position to return to
+    assigned_segment: tuple[str, str] = ("Washer", "Cutter")  # (from_station, to_station)
+    is_active: bool = True  # False for reserve robots
 
     def get_observation(self, grid: list[list[Optional[Station]]]) -> dict:
         """Get 3x3 observation around robot."""
@@ -171,6 +175,10 @@ class LogisticRobot:
 
     def step(self, grid: list[list[Optional[Station]]]) -> None:
         """Execute one step of robot movement/action."""
+        # Reserve robots don't act
+        if not self.is_active:
+            return
+
         if self.status == RobotStatus.ERROR:
             return
 
@@ -181,15 +189,27 @@ class LogisticRobot:
                 self._plan_path(self.current_task.target_position)
                 self.status = RobotStatus.MOVING
 
-        # Move along path
-        if self.status == RobotStatus.MOVING and len(self.path) > 0:
-            next_pos = self.path.pop(0)
-            # Simple collision avoidance - just move
-            self.position = next_pos
+        # If idle with no tasks and not at home, return home
+        elif self.status == RobotStatus.IDLE and len(self.task_queue) == 0:
+            if self.home_position and self.position != self.home_position:
+                self._plan_path(self.home_position)
+                if len(self.path) > 0:
+                    self.status = RobotStatus.MOVING
 
-            # Check if reached destination
+        # Move along path or execute task if already at destination
+        if self.status == RobotStatus.MOVING:
+            if len(self.path) > 0:
+                next_pos = self.path.pop(0)
+                # Simple collision avoidance - just move
+                self.position = next_pos
+
+            # Check if reached destination (or already there)
             if len(self.path) == 0:
-                self._execute_task_at_destination()
+                if self.current_task:
+                    self._execute_task_at_destination()
+                else:
+                    # Reached home position
+                    self.status = RobotStatus.IDLE
 
     def _plan_path(self, target: tuple[int, int]) -> None:
         """Plan simple Manhattan path to target."""
@@ -217,6 +237,7 @@ class LogisticRobot:
             return
 
         task_type = self.current_task.task_type
+        task_completed = False
 
         if task_type == "pick":
             # Pick item from station
@@ -224,6 +245,10 @@ class LogisticRobot:
                 item = self.current_task.target_station.take_output()
                 if item:
                     self.carrying_item = item
+                    task_completed = True
+                else:
+                    # No item available, cancel task
+                    task_completed = True  # Mark as complete to move on
 
         elif task_type == "drop":
             # Drop item to station
@@ -231,10 +256,19 @@ class LogisticRobot:
                 success = self.current_task.target_station.add_input(self.carrying_item)
                 if success:
                     self.carrying_item = None
+                    task_completed = True
+                else:
+                    # Station full, retry next time
+                    task_completed = False
+            else:
+                # No item to drop, cancel task
+                task_completed = True
 
-        self.current_task.completed = True
-        self.current_task = None
-        self.status = RobotStatus.IDLE
+        if task_completed:
+            self.current_task.completed = True
+            self.current_task = None
+            self.status = RobotStatus.IDLE
+        # If not completed, stay at current position and retry next step
 
     def raise_error(self) -> None:
         """Raise error flag."""

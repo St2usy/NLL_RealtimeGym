@@ -38,6 +38,7 @@ class Station:
     station_id: int
     station_type: StationType
     position: tuple[int, int]  # (row, col)
+    line: int = 1  # Production line (1 or 2)
     status: StationStatus = StationStatus.IDLE
     input_buffer: list[Item] = field(default_factory=list)
     output_buffer: list[Item] = field(default_factory=list)

@@ -33,15 +33,18 @@ def start_production_batch():
         return False
 
     # Add items to all washers that have space
+    # Keep the pipeline full to ensure continuous production
     added = False
     for station in env.stations:
-        if station.station_type.value == "Washer" and len(station.input_buffer) < 3:
+        if station.station_type.value == "Washer" and len(station.input_buffer) < 5:
             # Create lettuce item to start production
+            # Item inherits the line from the station
             item = Item(
                 item_type=ItemType.LETTUCE,
                 quantity=1,
                 quality=1.0,
-                processed=False
+                processed=False,
+                line=station.line
             )
             station.input_buffer.append(item)
             added = True
@@ -49,43 +52,8 @@ def start_production_batch():
     return added
 
 
-def auto_transport_items():
-    """Automatically transport items between stations."""
-    # Simple rule: transport to next station type in sequence
-    station_sequence = ["Washer", "Cutter", "Plating", "Sealing", "VisionQA", "Storage"]
-
-    # For salad recipe, we skip Cooker (no cooking needed)
-    for station in env.stations:
-        if station.station_type.value == "Storage":
-            continue
-
-        # If station has output, find next station
-        while len(station.output_buffer) > 0:
-            try:
-                current_idx = station_sequence.index(station.station_type.value)
-                if current_idx < len(station_sequence) - 1:
-                    next_type = station_sequence[current_idx + 1]
-
-                    # Find next station of this type with space
-                    next_station = None
-                    for s in env.stations:
-                        if s.station_type.value == next_type and len(s.input_buffer) < s.buffer_capacity:
-                            # For storage, only use output storage (bottom one)
-                            if next_type == "Storage" and s.position[0] != 15:
-                                continue
-                            next_station = s
-                            break
-
-                    # Transport item
-                    if next_station:
-                        item = station.output_buffer.pop(0)
-                        next_station.input_buffer.append(item)
-                    else:
-                        break  # No space, stop processing this station
-                else:
-                    break
-            except ValueError:
-                break
+# Logistic robots now handle transport automatically via environment
+# No manual transport needed
 
 
 # Main simulation loop
@@ -119,29 +87,26 @@ while running and not done:
 
     if not paused:
         for _ in range(speed):
-            # Start production every 5 steps to keep pipeline full
-            if step_count % 5 == 0:
+            # Start production every 3 steps to keep pipeline full
+            if step_count % 3 == 0:
                 start_production_batch()
 
-            # Step environment first (processes stations)
+            # Step environment (processes stations and robots)
             obs, done, reward, reset = env.step("WAIT")
             step_count += 1
 
-            # Auto transport between stations after processing
-            auto_transport_items()
-
             # Check for completed items in final storage
             for station in env.stations:
-                if station.station_type.value == "Storage" and station.position[0] == 15:
+                if station.station_type.value == "Storage" and station.position[0] == 19:
                     # Move items from input buffer to completed
                     while len(station.input_buffer) > 0:
                         item = station.input_buffer.pop(0)
                         if item.item_type != ItemType.DEFECTIVE:
                             env.completed_products += 1
-                            print(f"Product completed! Total: {env.completed_products}/{env.target_products}")
+                            print(f"[Line {item.line}] Product completed! Total: {env.completed_products}/{env.target_products}")
                         else:
                             env.defective_products += 1
-                            print(f"Defective product detected! Total defects: {env.defective_products}")
+                            print(f"[Line {item.line}] Defective product! Total defects: {env.defective_products}")
 
             if done:
                 break
@@ -208,7 +173,7 @@ while running and not done:
     screen.blit(controls_text, (bar_x, status_y + 50))
 
     pygame.display.flip()
-    clock.tick(30)  # 30 FPS
+    clock.tick(10)  # 10 FPS (slower = lower number)
 
 # Final results
 print("\n" + "="*50)
