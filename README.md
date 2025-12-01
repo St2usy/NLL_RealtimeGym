@@ -159,14 +159,14 @@ Evaluate agents using the command-line interface:
 
 ```bash
 # Detailed configuration
-agile_eval --time_unit  seconds \
-    --time_pressure 8192 \
-    --internal_budget 4096 \
-    --game freeway \
-    --cognitive_load E \
-    --mode agile \
-    --reactive-model-config configs/example-gemini-2.5-flash-reactive.yaml \
-    --planning-model-config configs/example-gemini-2.5-flash-planning.yaml \
+agile_eval --time_unit  seconds 
+    --time_pressure 8192 
+    --internal_budget 4096 
+    --game freeway 
+    --cognitive_load E 
+    --mode agile 
+    --reactive-model-config configs/example-gemini-2.5-flash-reactive.yaml 
+    --planning-model-config configs/example-gemini-2.5-flash-planning.yaml 
     --seed_num 1 --repeat_times 1
 
 # Using more compact configurations

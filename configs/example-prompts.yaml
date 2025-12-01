@@ -1,3 +1,4 @@
 freeway: realtimegym.prompts.freeway
 overcooked: realtimegym.prompts.overcooked
 snake: realtimegym.prompts.snake
+factory: realtimegym.prompts.factory
