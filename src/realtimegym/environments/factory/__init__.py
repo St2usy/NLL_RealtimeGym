@@ -94,6 +94,12 @@ class FactoryEnv(BaseEnv):
         # Initialize production orders
         self._initialize_orders()
 
+        # Set recipe for stations that need it (Cooker, Plating)
+        recipe = RECIPES[self.current_recipe]
+        for station in self.stations:
+            if station.station_type in [StationType.COOKER, StationType.PLATING]:
+                station.current_recipe = recipe
+
         # Disable malfunctions for smooth simulation
         for station in self.stations:
             station.malfunction_probability = 0.0
@@ -326,7 +332,7 @@ class FactoryEnv(BaseEnv):
         else:  # H
             self.target_products = 50
 
-        self.current_recipe = RecipeType.SALAD  # Start with salad
+        self.current_recipe = RecipeType.SALAD  # Start with 
 
     def step(self, action: str) -> tuple[dict[str, Any], bool, float, bool]:
         """
