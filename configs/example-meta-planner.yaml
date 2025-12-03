@@ -1,0 +1,26 @@
+# Meta Planner Agent Configuration
+# This configuration is for the LLM-based MetaPlannerAgent
+
+# Model configuration
+model: "gpt-4o"  # or "gpt-4o-mini", "claude-3-5-sonnet-20241022", "deepseek-chat", etc.
+
+# API endpoint (optional, defaults to OpenAI)
+# url: "https://api.openai.com/v1"
+# url: "https://api.anthropic.com/v1"  # for Claude
+# url: "https://api.deepseek.com"  # for DeepSeek
+
+# API key (use environment variable)
+api_key: "${OPENAI_API_KEY}"
+# api_key: "${ANTHROPIC_API_KEY}"  # for Claude
+# api_key: "${DEEPSEEK_API_KEY}"  # for DeepSeek
+
+# Inference parameters
+inference_parameters:
+  temperature: 0.7
+  max_tokens: 2000
+  top_p: 0.95
+  # max_completion_tokens: 2000  # Alternative to max_tokens
+
+# Tokenizer (optional, only needed for token-based budgets with streaming)
+# tokenizer: "gpt-4"
+# tokenizer: "deepseek-ai/DeepSeek-V3"

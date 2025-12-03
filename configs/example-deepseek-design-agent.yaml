@@ -1,0 +1,20 @@
+# Design Agent Configuration - DeepSeek V3
+# Example configuration using DeepSeek V3 model
+
+# Model configuration
+model: "deepseek-chat"
+
+# API endpoint
+url: "https://api.deepseek.com"
+
+# API key (use environment variable)
+api_key: "${DEEPSEEK_API_KEY}"
+
+# Inference parameters
+inference_parameters:
+  temperature: 0.7
+  max_tokens: 2000
+  top_p: 0.95
+
+# Tokenizer for token-based budgets
+tokenizer: "deepseek-ai/DeepSeek-V3"

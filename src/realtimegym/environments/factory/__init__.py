@@ -20,6 +20,10 @@ from .stations import (
     VisionQA,
     Washer,
 )
+from .design_agent import DesignAgent
+from .llm_design_agent import LLMDesignAgent
+from .llm_meta_planner import LLMMetaPlannerAgent
+from .meta_planner import MetaPlannerAgent
 from .upper_agents import (
     FacilityManagementAgent,
     ProductDesignAgent,
@@ -532,6 +536,10 @@ __all__ = [
     "LogisticRobot",
     "Task",
     # Upper Agents
+    "MetaPlannerAgent",
+    "DesignAgent",
+    "LLMMetaPlannerAgent",
+    "LLMDesignAgent",
     "ProductDesignAgent",
     "FacilityManagementAgent",
     "RobotCoordinationAgent",

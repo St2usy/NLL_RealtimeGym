@@ -4,17 +4,21 @@ Upper-level agent interfaces for Factory environment.
 These are interfaces for LLM-based agents to interact with the environment.
 The actual implementation will be done separately using LLM agents.
 
-Four types of upper agents:
+Six types of upper agents:
 1. ProductDesignAgent: Route planning and batch size decisions
 2. FacilityManagementAgent: Predictive maintenance and risk management
 3. RobotCoordinationAgent: Robot scheduling and path planning
 4. QualityInspectionAgent: Quality control and defect management
+5. MetaPlannerAgent: High-level strategic planning and coordination
+6. DesignAgent: Production system design and capacity optimization
 """
 
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
+from .design_agent import DesignAgent
 from .items import RecipeType
+from .meta_planner import MetaPlannerAgent
 from .stations import Station
 
 
@@ -215,6 +219,8 @@ class QualityInspectionAgent:
 def create_upper_agents() -> dict[str, Any]:
     """Create all upper-level agents."""
     return {
+        "meta_planner": MetaPlannerAgent(),
+        "design_agent": DesignAgent(),
         "product_design": ProductDesignAgent(),
         "facility_management": FacilityManagementAgent(),
         "robot_coordination": RobotCoordinationAgent(),
